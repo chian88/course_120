@@ -1,4 +1,3 @@
-require 'pry'
 class Rock
   attr_accessor :value
 
@@ -130,69 +129,28 @@ end
 
 class Computer < Player
   def set_name
-    self.name = ['R2D2', 'Hal', "Soony", "Chappie"].sample
+    self.name = ['R2D2', 'Hal', "Soony", "Chappie", "Number 5"].sample
   end
 
-  def choose(history)
-    history.worst_type
-
-    if history.worst.nil?
-      worst = RPSGame::TYPES
-    else
-      worst = case history.worst[0]
-              when :rock then RPSGame::TYPES_ROCK
-              when :paper then RPSGame::TYPES_PAPER
-              when :scissors then RPSGame::TYPES_SCISSORS
-              when :lizard then RPSGame::TYPES_LIZARD
-              when :spock then RPSGame::TYPES_SPOCK
-              end
-    end
-    self.type = string_to_type(worst.sample)
+  def choose(choice_arr)
+    self.type = string_to_type(choice_arr.sample)
   end
 end
 
 class History
-  attr_accessor :caches, :worst
+  attr_accessor :caches
 
   def initialize
-    @caches = []
+    @caches = { win: [], lose: [], tie: [] }
   end
 
-  def record(last_game, human_type, computer_type)
-    caches << [last_game, human_type, computer_type]
-  end
-
-  def worst_type
-    frequency = { rock: 0, paper: 0, scissors: 0, lizard: 0, spock: 0 }
-
-    lose_history = caches.select { |pair| pair[0] == 'win' }
-
-    lose_history.each do |pair|
-      case pair[2]
-      when 'rock' then frequency[:rock] += 1
-      when 'paper' then frequency[:paper] += 1
-      when 'scissors' then frequency[:scissors] += 1
-      when 'lizard' then frequency[:lizard] += 1
-      when 'spock' then frequency[:spock] += 1
-      end
-    end
-    worst_dummy = frequency.max_by { |_, v| v }
-    @worst = worst_dummy[1].zero? ? nil : worst_dummy
+  def record(last_game, human, computer)
+    caches[last_game] << [human.type.value, computer.type.value]
   end
 end
 
 class RPSGame
   TYPES = ['rock', 'paper', 'scissors', 'lizard', 'spock'].freeze
-  TYPES_ROCK  = ['rock', 'paper', 'paper', 'scissors', 'scissors', 'lizard',
-                 'lizard', 'spock', 'spock'].freeze
-  TYPES_PAPER = ['rock', 'rock', 'paper', 'scissors', 'scissors', 'lizard',
-                 'lizard', 'spock', 'spock'].freeze
-  TYPES_SCISSORS = ['rock', 'rock', 'paper', 'paper', 'scissors', 'lizard',
-                    'lizard', 'spock', 'spock'].freeze
-  TYPES_LIZARD = ['rock', 'rock', 'paper', 'paper', 'scissors', 'scissors',
-                  'lizard', 'spock', 'spock'].freeze
-  TYPES_SPOCK = ['rock', 'rock', 'paper', 'paper', 'scissors', 'scissors',
-                 'lizard', 'lizard', 'spock'].freeze
 
   attr_accessor :human, :computer, :history
 
@@ -210,26 +168,32 @@ class RPSGame
     puts "Thanks for playing rock, paper, scissors."
   end
 
-  def display_moves
-    puts "#{human.name} chose #{human.type.value}."
-    puts "#{computer.name} chose #{computer.type.value}"
+  def determine_winner
+    if human.type.win?(computer.type)
+      human.score.add_one
+      @last_game = :lose
+    elsif computer.type.win?(human.type)
+      computer.score.add_one
+      @last_game = :win
+    else
+      @last_game = :tie
+    end
   end
 
   def display_winner
-    if human.type.win?(computer.type)
-      puts "#{human.name} won!"
-      human.score.add_one
-      @last_game = 'win'
-    elsif computer.type.win?(human.type)
-      puts "#{computer.name} won!"
-      computer.score.add_one
-      @last_game = 'lost'
-    else
-      puts "It's a tie."
-      @last_game = 'tie'
-    end
-    puts "#{human.name} score is #{human.score.value}"
+    puts "#{human.name} won!" if @last_game == :lose
+    puts "#{computer.name} won!" if @last_game == :win
+    puts "It's a tie." if @last_game == :tie
+  end
+
+  def display_score
+    puts "#{human.name} score is #{human.score.value}."
     puts "#{computer.name} score is #{computer.score.value}"
+  end
+
+  def display_moves
+    puts "#{human.name} chose #{human.type.value}."
+    puts "#{computer.name} chose #{computer.type.value}"
   end
 
   def play_again?
@@ -254,18 +218,46 @@ class RPSGame
     human.score.value >= 5 || computer.score.value >= 5
   end
 
-  def analyze_history
-    history.record(@last_game, human.type.value, computer.type.value)
+  def starting_position
+    case computer.name
+    when 'R2D2' then { 'rock' => 5, 'paper' => 20, 'scissors' => 5,
+                       'lizard' => 5, 'spock' => 5 }
+    when 'Hal' then { 'rock' => 5, 'paper' => 5, 'scissors' => 5,
+                      'lizard' => 5, 'spock' => 10 }
+    when 'Soony' then { 'rock' => 0, 'paper' => 5, 'scissors' => 5,
+                        'lizard' => 5, 'spock' => 5 }
+    when 'Chappie' then { 'rock' => 5, 'paper' => 5, 'scissors' => 5,
+                          'lizard' => 20, 'spock' => 5 }
+    when 'Number 5' then { 'rock' => 20, 'paper' => 5, 'scissors' => 20,
+                           'lizard' => 5, 'spock' => 5 }
+    end
+  end
+
+  def odd_generator
+    arr = []
+    types = starting_position
+    history.caches[:lose].each { |pair| types[pair[1]] -= 1 }
+    types.each do |key, value|
+      value = 1 if value <= 1
+      value.times { arr << key }
+    end
+    arr
+  end
+
+  def display
+    display_moves
+    display_winner
+    display_score
   end
 
   def play
     display_welcome_message
     loop do
       human.choose
-      computer.choose(@history)
-      display_moves
-      display_winner
-      analyze_history
+      computer.choose(odd_generator)
+      determine_winner
+      display
+      history.record(@last_game, human, computer)
       next unless full_score?
       break unless play_again?
     end

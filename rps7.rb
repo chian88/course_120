@@ -88,38 +88,34 @@ class Player
   end
 
   def string_to_type(string)
+    @type =
     case string
-    when "rock"
-      @type = Rock.new
-    when "paper"
-      @type = Paper.new
-    when "scissors"
-      @type = Scissors.new
-    when "lizard"
-      @type = Lizard.new
-    when "spock"
-      @type = Spock.new
+    when "rock" then Rock.new
+    when "paper" then Paper.new
+    when "scissors" then Scissors.new
+    when "lizard" then Lizard.new
+    when "spock" then Spock.new
     end
   end
 end
 
 class Human < Player
   def set_name
-    n = ''
+    temp_name = ''
     loop do
       puts "What's your name?"
-      n = gets.chomp
-      break unless n.empty?
+      temp_name = gets.chomp
+      break unless temp_name.empty? || temp_name.match(/^\s*$/)
       puts "Sorry , must enter a value."
     end
-    self.name = n
+    self.name = temp_name
   end
 
   def choose
     choice = ''
     loop do
       puts "Please choose #{RPSGame::TYPES.join(', ')}:"
-      choice = gets.chomp
+      choice = gets.chomp.downcase
       break if RPSGame::TYPES.include? choice
       puts "Sorry, invalid choice."
     end
@@ -205,8 +201,7 @@ class RPSGame
       break if ['y', 'n'].include? answer.downcase
       puts "Sorry , answer must be y or n."
     end
-    return true if answer.casecmp('y').zero?
-    false
+    answer.casecmp('y').zero? ? true : false
   end
 
   def reset_score
@@ -219,23 +214,24 @@ class RPSGame
   end
 
   def starting_position
-    case computer.name
-    when 'R2D2' then { 'rock' => 5, 'paper' => 20, 'scissors' => 5,
-                       'lizard' => 5, 'spock' => 5 }
-    when 'Hal' then { 'rock' => 5, 'paper' => 5, 'scissors' => 5,
-                      'lizard' => 5, 'spock' => 10 }
-    when 'Soony' then { 'rock' => 0, 'paper' => 5, 'scissors' => 5,
-                        'lizard' => 5, 'spock' => 5 }
-    when 'Chappie' then { 'rock' => 5, 'paper' => 5, 'scissors' => 5,
-                          'lizard' => 20, 'spock' => 5 }
-    when 'Number 5' then { 'rock' => 20, 'paper' => 5, 'scissors' => 20,
-                           'lizard' => 5, 'spock' => 5 }
-    end
+    @bots = {
+    'R2D2'=> { 'rock' => 5, 'paper' => 20, 'scissors' => 5,
+               'lizard' => 5, 'spock' => 5 },
+    'Hal'=> { 'rock' => 5, 'paper' => 5, 'scissors' => 5,
+              'lizard' => 5, 'spock' => 10 },
+    'Soony'=> { 'rock' => 0, 'paper' => 5, 'scissors' => 5,
+                'lizard' => 5, 'spock' => 5 },
+    'Chappie'=> { 'rock' => 5, 'paper' => 5, 'scissors' => 5,
+                  'lizard' => 20, 'spock' => 5 },
+    'Number 5'=> { 'rock' => 20, 'paper' => 5, 'scissors' => 20,
+                   'lizard' => 5, 'spock' => 5 }
+    }
   end
 
   def odd_generator
     arr = []
-    types = starting_position
+    starting_position
+    types = @bots[computer.name]
     history.caches[:lose].each { |pair| types[pair[1]] -= 1 }
     types.each do |key, value|
       value = 1 if value <= 1

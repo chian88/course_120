@@ -105,7 +105,7 @@ class Human < Player
     loop do
       puts "What's your name?"
       temp_name = gets.chomp
-      break unless temp_name.empty? || temp_name.match(/^\s*$/)
+      break unless temp_name.strip.empty?
       puts "Sorry , must enter a value."
     end
     self.name = temp_name
@@ -201,7 +201,7 @@ class RPSGame
       break if ['y', 'n'].include? answer.downcase
       puts "Sorry , answer must be y or n."
     end
-    answer.casecmp('y').zero? ? true : false
+    answer.casecmp('y').zero?
   end
 
   def reset_score

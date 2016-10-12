@@ -188,7 +188,6 @@ class TTTGame
       display_board
       turn_loop
       determine_result
-      clear_screen_and_display_board
       display_result
       display_score
       round_reset
@@ -298,6 +297,7 @@ class TTTGame
   end
 
   def determine_result
+    clear_screen_and_display_board
     case board.winning_marker
     when human.marker
       human.score += 1

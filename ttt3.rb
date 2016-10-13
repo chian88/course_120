@@ -287,7 +287,7 @@ class TTTGame
   end
 
   def computer_moves
-    if find_moves
+    if find_movess
       board[find_moves] = computer.marker
     elsif board[5].unmarked?
       board[5] = computer.marker

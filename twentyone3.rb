@@ -132,6 +132,16 @@ class Game
 
   private
 
+  def single_round
+    initial_deal
+    show_initial_card
+    player_turn
+    return if player.busted?
+    dealer_turn
+    return if dealer.busted?
+    show_result
+  end
+
   def show_initial_card
     puts "Player have #{player.show_hand} for a total of #{player.hand.total}"
     puts "Dealer have #{dealer.show_hand(1)}"
@@ -221,19 +231,6 @@ class Game
     if participant.busted?
       puts "#{participant.name} have busted with a card of \
 #{participant.show_hand} for a total of #{participant.hand.total}"
-    end
-  end
-
-  def single_round
-    loop do
-      initial_deal
-      show_initial_card
-      player_turn
-      break if player.busted?
-      dealer_turn
-      break if dealer.busted?
-      show_result
-      break
     end
   end
 

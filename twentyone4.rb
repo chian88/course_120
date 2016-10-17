@@ -37,12 +37,12 @@ class Hand
 end
 
 class Participant
-  attr_accessor :hand
+  attr_accessor :hand, :deck
   attr_reader :name
 
-  def initialize(name)
+  def initialize(deck)
     @hand = Hand.new
-    @name = name
+    @deck = deck
   end
 
   def joiner(str_arr)
@@ -62,6 +62,54 @@ class Participant
 
   def less_than_17?
     hand.total < 17
+  end
+end
+
+class Player < Participant
+  def turn
+    while !busted?
+      reply = prompt_player
+      if reply == 'hit'
+        hand.get_card(deck.deal)
+        puts "Player choose to hit."
+      else
+        puts "Player choose to stay."
+        break
+      end
+      puts "Player now have #{show_hand} for a total\
+ of #{hand.total}."
+    end
+
+    if busted?
+      puts "Player have busted."
+    end
+  end
+
+  def prompt_player
+    reply = ''
+    loop do
+      puts "Would Player like to [hit] or [stay]?"
+      reply = gets.chomp.downcase
+      break if %w(hit stay).include? reply
+      puts "Invalid choices"
+    end
+    reply
+  end
+end
+
+class Dealer < Participant
+  def turn
+    counter = 0
+    while !busted? && less_than_17?
+      hand.get_card(deck.deal)
+      counter += 1
+      puts "Dealer hit #{counter} times"
+    end
+
+    if busted?
+      puts "Dealer have busted with a card of #{show_hand} for a total of \
+#{hand.total}."
+    end
   end
 end
 
@@ -114,9 +162,9 @@ class Game
   attr_accessor :player, :dealer, :deck
 
   def initialize
-    @player = Participant.new("Player")
-    @dealer = Participant.new("Dealer")
     @deck = Deck.new
+    @player = Player.new(@deck)
+    @dealer = Dealer.new(@deck)
   end
 
   def start
@@ -134,9 +182,9 @@ class Game
   def single_round
     initial_deal
     show_initial_card
-    player_turn
+    player.turn
     return if player.busted?
-    dealer_turn
+    dealer.turn
     return if dealer.busted?
     show_result
   end
@@ -144,17 +192,6 @@ class Game
   def show_initial_card
     puts "Player have #{player.show_hand} for a total of #{player.hand.total}"
     puts "Dealer have #{dealer.show_hand(1)}"
-  end
-
-  def prompt_player
-    reply = ''
-    loop do
-      puts "Would Player like to [hit] or [stay]?"
-      reply = gets.chomp.downcase
-      break if %w(hit stay).include? reply
-      puts "Invalid choices"
-    end
-    reply
   end
 
   def show_cards
@@ -199,48 +236,11 @@ class Game
     initialize
   end
 
-  def player_turn
-    while !player.busted?
-      reply = prompt_player
-      if reply == 'hit'
-        deal(player)
-        puts "Player choose to hit."
-      else
-        puts "Player choose to stay."
-        break
-      end
-      puts "Player now have #{player.show_hand} for a total\
- of #{player.hand.total}."
-    end
-    check_busted(player)
-  end
-
   def initial_deal
     2.times do
       player.hand.get_card(deck.deal)
       dealer.hand.get_card(deck.deal)
     end
-  end
-
-  def deal(participant)
-    participant.hand.get_card(deck.deal)
-  end
-
-  def check_busted(participant)
-    if participant.busted?
-      puts "#{participant.name} have busted with a card of \
-#{participant.show_hand} for a total of #{participant.hand.total}"
-    end
-  end
-
-  def dealer_turn
-    counter = 0
-    while !dealer.busted? && dealer.less_than_17?
-      deal(dealer)
-      counter += 1
-      puts "Dealer hit #{counter} times"
-    end
-    check_busted(dealer)
   end
 end
 
